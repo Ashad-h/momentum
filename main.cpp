@@ -40,13 +40,13 @@ struct StreamingParams
 {
     bool copy_video;
     bool copy_audio;
-    char *output_extension;
-    char *muxer_opt_key;
-    char *muxer_opt_value;
-    char *video_codec;
-    char *audio_codec;
-    char *codec_priv_key;
-    char *codec_priv_value;
+    std::string output_extension;
+    std::string muxer_opt_key;
+    std::string muxer_opt_value;
+    std::string video_codec;
+    std::string audio_codec;
+    std::string codec_priv_key;
+    std::string codec_priv_value;
 };
 
 int fill_stream_info(AVStream *avs, AVCodec **avc, AVCodecContext **avcc)
@@ -149,7 +149,7 @@ int prepare_video_encoder(StreamingContext &encoder, const StreamingContext &dec
 
     AVCodecContext *decoder_ctx = decoder.video_avcc;
 
-    encoder.video_avc = avcodec_find_encoder_by_name(sp.video_codec);
+    encoder.video_avc = avcodec_find_encoder_by_name(sp.video_codec.c_str());
     if (!encoder.video_avc)
     {
         std::cerr << ("could not find the proper codec");
@@ -164,8 +164,8 @@ int prepare_video_encoder(StreamingContext &encoder, const StreamingContext &dec
     }
 
     av_opt_set(encoder.video_avcc->priv_data, "preset", "fast", 0);
-    if (sp.codec_priv_key && sp.codec_priv_value)
-        av_opt_set(encoder.video_avcc->priv_data, sp.codec_priv_key, sp.codec_priv_value, 0);
+    if (!sp.codec_priv_key.empty() && !sp.codec_priv_value.empty())
+        av_opt_set(encoder.video_avcc->priv_data, sp.codec_priv_key.c_str(), sp.codec_priv_value.c_str(), 0);
 
     encoder.video_avcc->height = decoder_ctx->height;
     encoder.video_avcc->width = decoder_ctx->width;
@@ -204,7 +204,7 @@ int prepare_audio_encoder(StreamingContext &encoder, const StreamingContext &dec
 
     int sample_rate = decoder.audio_avcc->sample_rate;
 
-    encoder.audio_avc = avcodec_find_encoder_by_name(sp.audio_codec);
+    encoder.audio_avc = avcodec_find_encoder_by_name(sp.audio_codec.c_str());
     if (!encoder.audio_avc)
     {
         std::cerr << ("could not find the proper codec");
@@ -431,9 +431,9 @@ int main(int argc, char **argv)
 
     AVDictionary *muxer_opts = NULL;
 
-    if (sp.muxer_opt_key && sp.muxer_opt_value)
+    if (!sp.muxer_opt_key.empty() && !sp.muxer_opt_value.empty())
     {
-        av_dict_set(&muxer_opts, sp.muxer_opt_key, sp.muxer_opt_value, 0);
+        av_dict_set(&muxer_opts, sp.muxer_opt_key.c_str(), sp.muxer_opt_value.c_str(), 0);
     }
 
     // https://ffmpeg.org/doxygen/trunk/group__lavf__encoding.html#ga18b7b10bb5b94c4842de18166bc677cb
